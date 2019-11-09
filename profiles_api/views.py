@@ -1,7 +1,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from profiles_api.serializers import ProfileSerializer
-from rest_framework import status
+from rest_framework import status,viewsets
+from rest_framework.authentication import TokenAuthentication
+from rest_framework import filters
+
+from profiles_api.serializers import ProfileSerializer,UserProfileSerializer
+from profiles_api import models,permissions
 # Create your views here.
 
 class ProfileAPIView(APIView):
@@ -41,3 +45,58 @@ class ProfileAPIView(APIView):
     def delete(self, request, pk=None):
         '''It deletes the object'''
         return Response({'Method':'Delete'})
+
+
+class ProfileViewSet(viewsets.ViewSet):
+    '''Api Handling using viewset'''
+    serializer_class = ProfileSerializer
+
+    def list(self, request):
+        '''Handles listing of objects'''
+        a_view = [
+            'It handles the api requests',
+            'It is very useful'
+        ]
+        return Response({'message':'Hello-View','a_view':a_view})
+
+    def create(self, request):
+        '''Handles Post Method'''
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            name = serializer.validated_data.get('name')
+            message = f'Hello {name}'
+            return Response({'Message':message})
+
+        else:
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def retrieve(self, request, pk=None):
+        '''handles Retrieving particular object'''
+        return Response({'Http_Method':'GET'})
+
+    def update(self, request, pk=None):
+        '''It handles updating the object'''
+        return Response({'Http_Method':'PUT'})
+
+    def partial_update(self, request, pk=None):
+        '''It handles partially updating the object'''
+        return Response({'Http_Method':'PATCH'})
+
+    def destroy(self, request, pk=None):
+        '''It handles destroying the object'''
+        return Response({'Http_Method':'Delete'})
+
+
+class UserProfileViewset(viewsets.ModelViewSet):
+    '''ViewSet to handle user Profiles'''
+    serializer_class = UserProfileSerializer
+    queryset = models.UserProfile.objects.all()
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (permissions.UpdateOwnProfile,)
+
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ['email','name']
